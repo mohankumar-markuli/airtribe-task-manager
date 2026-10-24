@@ -1,7 +1,12 @@
 
-const { registerSchema } = require('../utils/authValidation');
+const {
+    registerSchema,
+    loginSchema,
+} = require('../utils/authValidation');
+
 const {
     registerUser,
+    loginUser,
     AuthServiceError,
 } = require('../services/authService');
 
@@ -25,9 +30,41 @@ async function register(req, res, next) {
         return res.status(201).json({
             success: true,
             message: 'Account created successfully',
-            data: {
-                user,
-            },
+            data: { user },
+        });
+    } catch (error) {
+        if (error instanceof AuthServiceError) {
+            return res.status(error.statusCode).json({
+                success: false,
+                message: error.message,
+            });
+        }
+
+        return next(error);
+    }
+}
+
+async function login(req, res, next) {
+    const validation = loginSchema.safeParse(req.body);
+
+    if (!validation.success) {
+        return res.status(400).json({
+            success: false,
+            message: 'Validation failed',
+            errors: validation.error.issues.map((issue) => ({
+                field: issue.path.join('.'),
+                message: issue.message,
+            })),
+        });
+    }
+
+    try {
+        const result = await loginUser(validation.data);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            data: result,
         });
     } catch (error) {
         if (error instanceof AuthServiceError) {
@@ -43,4 +80,5 @@ async function register(req, res, next) {
 
 module.exports = {
     register,
+    login,
 };

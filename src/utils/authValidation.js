@@ -23,6 +23,23 @@ const registerSchema = z
     })
     .strict();
 
+const loginSchema = z
+    .object({
+        email: z
+            .string()
+            .trim()
+            .email('Enter a valid email address')
+            .max(254, 'Email cannot exceed 254 characters')
+            .transform((email) => email.toLowerCase()),
+
+        password: z
+            .string()
+            .min(1, 'Password is required')
+            .max(72, 'Password is too long'),
+    })
+    .strict();
+
 module.exports = {
     registerSchema,
+    loginSchema,
 };
