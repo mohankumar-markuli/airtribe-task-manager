@@ -2,12 +2,14 @@
 const {
     registerSchema,
     loginSchema,
+    updateProfileSchema,
 } = require('../utils/authValidation');
 
 const {
     registerUser,
     loginUser,
     getCurrentUser,
+    updateUserProfile,
     AuthServiceError,
 } = require('../services/authService');
 
@@ -100,8 +102,51 @@ async function getMe(req, res, next) {
     }
 }
 
+async function updateProfile(req, res, next) {
+    const validation = updateProfileSchema.safeParse(req.body);
+
+    if (!validation.success) {
+        return res.status(400).json({
+            success: false,
+            message: 'Validation failed',
+            errors: validation.error.issues.map((issue) => ({
+                field: issue.path.join('.'),
+                message: issue.message,
+            })),
+        });
+    }
+
+    try {
+        const user = await updateUserProfile(req.user.id, validation.data);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Profile updated successfully',
+            data: { user },
+        });
+    } catch (error) {
+        if (error instanceof AuthServiceError) {
+            return res.status(error.statusCode).json({
+                success: false,
+                message: error.message,
+            });
+        }
+
+        return next(error);
+    }
+}
+
+async function logout(req, res) {
+    return res.status(200).json({
+        success: true,
+        message: 'Logged out successfully',
+    });
+}
+
 module.exports = {
     register,
     login,
     getMe,
+    updateProfile,
+    logout,
 };

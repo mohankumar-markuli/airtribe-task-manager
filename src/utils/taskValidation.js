@@ -18,9 +18,30 @@ const createTaskSchema = z
             .optional(),
 
         dueDate: z
-            .iso
-            .datetime({ offset: true })
+            .union([
+                z.string().datetime(),
+                z.coerce.date(),
+                z.null(),
+            ])
             .optional(),
+
+        status: z
+            .enum(taskStatuses)
+            .optional(),
+
+        assignee: z
+            .string()
+            .trim()
+            .regex(/^[0-9a-fA-F]{24}$/, 'Invalid assignee ID')
+            .optional()
+            .nullable(),
+
+        team: z
+            .string()
+            .trim()
+            .regex(/^[0-9a-fA-F]{24}$/, 'Invalid team ID')
+            .optional()
+            .nullable(),
     })
     .strict();
 
@@ -41,7 +62,8 @@ const updateTaskSchema = z
 
         dueDate: z
             .union([
-                z.iso.datetime({ offset: true }),
+                z.string().datetime(),
+                z.coerce.date(),
                 z.null(),
             ])
             .optional(),
@@ -49,6 +71,20 @@ const updateTaskSchema = z
         status: z
             .enum(taskStatuses)
             .optional(),
+
+        assignee: z
+            .string()
+            .trim()
+            .regex(/^[0-9a-fA-F]{24}$/, 'Invalid assignee ID')
+            .optional()
+            .nullable(),
+
+        team: z
+            .string()
+            .trim()
+            .regex(/^[0-9a-fA-F]{24}$/, 'Invalid team ID')
+            .optional()
+            .nullable(),
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {

@@ -1,5 +1,6 @@
 
 require('dotenv').config();
+const { initSocket } = require('./socket');
 
 const app = require('./app');
 const {
@@ -17,6 +18,9 @@ async function startServer() {
 
     server = app.listen(PORT, () => {
         console.log(`Task Manager API listening on port ${PORT}`);
+        // Initialise Socket.io with the HTTP server
+        const io = initSocket(server, app);
+        // Optionally expose via app locals (already set inside initSocket)
     });
 }
 

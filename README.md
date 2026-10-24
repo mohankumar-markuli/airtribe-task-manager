@@ -1,210 +1,179 @@
 # Airtribe Task Manager API
 
-A RESTful backend for task tracking built with Node.js, Express.js, and MongoDB. The API supports user authentication and personal task management, with validation, security middleware, and automated tests.
+A collaborative, real-time backend system for task tracking and management built with **Node.js**, **Express.js**, **MongoDB (Mongoose)**, and **Socket.io**. The application empowers users to create, assign, and track tasks, collaborate with team members through comments and file attachments, receive real-time notifications, and generate AI-assisted task descriptions.
 
-## Features
+---
 
-- User registration and login using JWT authentication
-- Password hashing with bcrypt
-- Authenticated current-user endpoint
-- Create, list, retrieve, update, and delete tasks
-- Task status management: `pending`, `in_progress`, and `completed`
-- Filter tasks by status
-- Search tasks by title
-- Sort tasks by creation date, due date, or title
-- Validate request data and return structured errors
-- Security headers, configurable CORS, and API rate limiting
-- MongoDB Atlas integration
-- Automated tests using Jest and Supertest
+## 🚀 Features & Highlights
 
-## Technology Stack
+- **User Authentication & Management**: Secure registration, login, JWT session management, password hashing via `bcryptjs`, profile viewing/updates, and secure logout.
+- **Task Management (Full CRUD)**:
+  - Create tasks with title, description, due date, status, assignee, and team.
+  - Multi-attribute task filtering by status (`pending`, `in_progress`, `completed`, `open`).
+  - Search across **both title and description**.
+  - Flexible sorting (`createdAt`, `dueDate`, `title`, `updatedAt`).
+  - View tasks assigned to the authenticated user (`?assignedToMe=true`).
+- **Team & Project Collaboration**:
+  - Create and manage teams, invite members by email or user ID, and remove members.
+  - Create and manage projects associated with teams.
+  - Task assignment to team members with real-time assignment notifications.
+- **Comments & File Attachments**:
+  - Add and list comments on tasks with author population.
+  - Upload file attachments (images, documents, PDFs) with `Multer` (up to 5MB) and stream downloads.
+- **Real-Time Updates & Notifications (Socket.io)**:
+  - Live socket events for task creation (`taskCreated`), updates (`taskUpdated`), assignments (`taskAssigned`), comments (`commentAdded`), and attachments (`attachmentAdded`).
+  - Room-based isolation for user personal notifications (`joinUser`) and task collaboration (`joinTask`).
+- **Generative AI Integration (OpenRouter)**:
+  - Generate polished task descriptions and summaries automatically using OpenRouter AI (`nvidia/nemotron-3-ultra-550b-a55b:free`).
+- **Production-Ready & Secure**:
+  - Security headers with `helmet`.
+  - Rate limiting with `express-rate-limit`.
+  - Strict input validation using `Zod`.
+  - Configurable CORS.
 
-- Node.js
-- Express.js
-- MongoDB Atlas and Mongoose
-- JSON Web Tokens (JWT)
-- bcryptjs
-- Zod validation
-- Helmet and CORS
-- Jest and Supertest
+---
 
-## Prerequisites
+## 🛠 Technology Stack
 
-Install the following:
+| Layer | Technology |
+|---|---|
+| **Runtime** | Node.js (v18+) |
+| **Web Framework** | Express.js 5 |
+| **Database** | MongoDB Atlas / Local MongoDB via Mongoose |
+| **Authentication** | JSON Web Tokens (`jsonwebtoken`) & `bcryptjs` |
+| **Real-time WebSockets** | Socket.io 4 |
+| **File Uploads** | Multer |
+| **AI Integration** | OpenRouter (`nvidia/nemotron-3-ultra-550b-a55b:free`) |
+| **Validation** | Zod schemas |
+| **Security** | Helmet, CORS, Express Rate Limit |
 
-- Node.js and npm
-- A MongoDB Atlas account or a reachable MongoDB instance
-- Git
+---
 
-## Getting Started
+## 📋 API Overview
 
-### 1. Clone the repository
+Base URL: `/api/v1`
 
+### 1. Health
+- `GET /api/v1/health` - Health check & database connection status
+
+### 2. Authentication & Profile
+- `POST /api/v1/auth/register` - Create a new user account
+- `POST /api/v1/auth/login` - Authenticate user & receive JWT Bearer token
+- `GET /api/v1/auth/me` - View current authenticated profile
+- `PUT /api/v1/auth/me` / `PATCH /api/v1/auth/me` - Update personal profile information
+- `POST /api/v1/auth/logout` - Secure logout
+
+### 3. Task Management
+- `POST /api/v1/tasks` - Create a new task (with title, description, due date, assignee, team)
+- `GET /api/v1/tasks` - List tasks with filtering (`status`, `assignedToMe`), search (`search`), and sorting (`sortBy`, `order`)
+- `GET /api/v1/tasks/:id` - Get details of a single task
+- `PATCH /api/v1/tasks/:id` - Update task details, status, or assign to team member
+- `DELETE /api/v1/tasks/:id` - Delete a task (owner only)
+
+### 4. Teams & Projects
+- `POST /api/v1/teams` - Create a new team
+- `GET /api/v1/teams` - List teams the user owns or belongs to
+- `GET /api/v1/teams/:id` - View team details and member list
+- `PATCH /api/v1/teams/:id` - Update team info (owner only)
+- `DELETE /api/v1/teams/:id` - Delete team (owner only)
+- `POST /api/v1/teams/:id/members` - Invite/add member by email or user ID
+- `DELETE /api/v1/teams/:id/members/:userId` - Remove member from team
+- `POST /api/v1/projects` - Create a project within a team
+- `GET /api/v1/projects` - List projects (optional filter by `teamId`)
+- `GET /api/v1/projects/:id` - View project details
+- `PATCH /api/v1/projects/:id` - Update project (owner only)
+- `DELETE /api/v1/projects/:id` - Delete project (owner only)
+
+### 5. Comments & Attachments
+- `POST /api/v1/tasks/:taskId/comments` - Add a comment to a task
+- `GET /api/v1/tasks/:taskId/comments` - List comments for a task
+- `DELETE /api/v1/tasks/:taskId/comments/:commentId` - Delete a comment
+- `POST /api/v1/tasks/:taskId/attachments` - Upload file attachment (`multipart/form-data`)
+- `GET /api/v1/tasks/:taskId/attachments` - List attachments on a task
+- `GET /api/v1/tasks/:taskId/attachments/:attachmentId` - Download attachment file
+- `DELETE /api/v1/tasks/:taskId/attachments/:attachmentId` - Delete attachment
+
+### 6. Generative AI
+- `POST /api/v1/ai/generate-description` - Generate AI-powered task descriptions or summaries
+
+---
+
+## ⚡ Quick Start
+
+### 1. Clone & Install
 ```bash
 git clone https://github.com/mohankumar-markuli/airtribe-task-manager.git
 cd airtribe-task-manager
-```
-
-### 2. Install dependencies
-
-```bash
 npm install
 ```
 
-### 3. Configure environment variables
-
-Create a local `.env` file using `.env.example` as a reference.
-
-Configure the variables required by the application, including:
-
-- `NODE_ENV`
-- `PORT`
-- `API_PREFIX`
-- `MONGODB_URI`
-- `JWT_SECRET`
-- `JWT_EXPIRES_IN`
-- `JWT_REFRESH_SECRET`
-- `JWT_REFRESH_EXPIRES_IN`
-- `CORS_ORIGIN`
-
-Use your own MongoDB connection string and strong, unique secrets. Never commit `.env` or real credentials to GitHub.
-
-Only environment variables actually used by the application affect its behavior; check the configuration files if you need to confirm which are currently active.
-
-### 4. Start the development server
-
+### 2. Configure Environment (`.env`)
 ```bash
+cp .env.example .env
+```
+Edit `.env` and set:
+```env
+PORT=3000
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/taskmanager
+JWT_SECRET=your_secure_jwt_secret_key_minimum_32_characters
+OPENROUTER_API_KEY=sk-or-v1-your-key-here
+```
+
+### 3. Seed MongoDB with Sample Data
+Populate users, teams, projects, tasks, comments, and attachments directly into your database:
+```bash
+npm run seed
+```
+
+### 4. Start Application
+```bash
+# Development (with auto-reload):
 npm run dev
-```
 
-Alternatively, start the application normally:
-
-```bash
+# Production:
 npm start
+
+# Automated End-to-End API Verification:
+npm run test:api
 ```
 
-The default application port is `3000`, unless configured otherwise.
+---
 
-## API Endpoints
+## 📖 Detailed Guides & Postman Collection
 
-The API prefix is `/api/v1`.
+- 📘 **[Postman API Collection & Testing Guide (Markdown)](docs/POSTMAN_API_COLLECTION.md)**: Full catalog of all endpoints, parameters, example inputs, and response bodies for Postman users.
+- 📦 **[Downloadable Postman Collection (JSON)](docs/Airtribe_Task_Manager.postman_collection.json)**: Ready to import directly into Postman.
+- 🛠 **[Execution & API Documentation](docs/EXECUTE.md)**: Step-by-step cURL walkthrough and Socket.io client setup.
 
-### Health
+---
 
-| Method | Endpoint | Purpose |
-|---|---|---|
-| GET | `/api/v1/health` | Check API health |
+## 📁 Project Structure
 
-### Authentication
-
-| Method | Endpoint | Purpose | Authentication |
-|---|---|---|---|
-| POST | `/api/v1/auth/register` | Register a user | Not required |
-| POST | `/api/v1/auth/login` | Log in | Not required |
-| GET | `/api/v1/auth/me` | Retrieve the current user | Required |
-
-For protected endpoints, send the JWT in the request header:
-
-```http
-Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+airtribe-task-manager/
+├── docs/
+│   ├── ARCHITECTURE.md          # System architecture & layers
+│   └── EXECUTE.md               # Step-by-step execution & cURL test guide
+├── src/
+│   ├── config/
+│   │   └── database.js          # MongoDB connection handler
+│   ├── controllers/             # Express request & response controllers
+│   ├── middlewares/             # JWT auth & Multer file upload middlewares
+│   ├── models/                  # Mongoose models (User, Task, Team, Project, Comment, Attachment)
+│   ├── routes/                  # Express REST routes
+│   ├── services/                # Business logic & database operations
+│   ├── utils/                   # Zod schemas & helpers
+│   ├── app.js                   # Express application setup
+│   ├── server.js                # Server entry point & graceful shutdown
+│   └── socket.js                # Socket.io setup & event dispatching
+├── uploads/                     # Storage directory for task file attachments
+├── .env.example                 # Environment configuration template
+├── package.json                 # Project dependencies & scripts
+└── README.md                    # Project overview & documentation
 ```
 
-### Tasks
+---
 
-All task endpoints require authentication. Tasks are associated with their owner, and users can access only their own tasks.
+## 📄 License
 
-| Method | Endpoint | Purpose |
-|---|---|---|
-| POST | `/api/v1/tasks` | Create a task |
-| GET | `/api/v1/tasks` | List tasks |
-| GET | `/api/v1/tasks/:id` | Retrieve a task |
-| PATCH | `/api/v1/tasks/:id` | Update a task |
-| DELETE | `/api/v1/tasks/:id` | Delete a task |
-
-### Task fields
-
-- `title`: required string, 2–120 characters
-- `description`: optional string, up to 2,000 characters
-- `dueDate`: optional ISO 8601 datetime
-- `status`: `pending`, `in_progress`, or `completed`
-
-New tasks default to `pending`.
-
-### List, filter, search, and sort tasks
-
-The list endpoint supports these query parameters:
-
-| Parameter | Purpose | Allowed values |
-|---|---|---|
-| `status` | Filter by task status | `pending`, `in_progress`, `completed` |
-| `search` | Search task titles | Text, up to 120 characters |
-| `sortBy` | Choose the sort field | `createdAt`, `dueDate`, `title` |
-| `order` | Choose sort direction | `asc`, `desc` |
-
-Example:
-
-```http
-GET /api/v1/tasks?status=pending&search=report&sortBy=dueDate&order=asc
-```
-
-### Example task request
-
-Create a task by sending a JSON request to `POST /api/v1/tasks` with a valid access token:
-
-```json
-{
-  "title": "Complete project documentation",
-  "description": "Document the API and setup instructions",
-  "dueDate": "2026-10-25T18:00:00.000Z"
-}
-```
-
-Update a task using `PATCH /api/v1/tasks/:id`:
-
-```json
-{
-  "status": "completed"
-}
-```
-
-Use a task ID returned by the API in place of `:id`. Refer to the validation rules and authentication responses when preparing requests.
-
-## Running Tests
-
-Run the complete automated test suite:
-
-```bash
-npm test
-```
-
-The tests cover application behavior, authentication, validation, task services, and API routes.
-
-## Project Structure
-
-```text
-src/
-  config/        Application configuration
-  controllers/   HTTP request handlers
-  middlewares/   Authentication and shared middleware
-  models/        MongoDB data models
-  routes/        API route definitions
-  services/      Business logic
-  utils/         Validation and shared utilities
-
-test/            Automated tests
-docs/            Project documentation
-```
-
-## Error Handling and Security
-
-- Validate incoming request data.
-- Return appropriate HTTP status codes for validation and resource errors.
-- Protect private endpoints with JWT authentication.
-- Restrict task operations to the authenticated owner.
-- Hash passwords rather than storing them in plain text.
-- Use Helmet, CORS configuration, and rate limiting.
-- Keep credentials and environment files out of version control.
-
-## Current Scope and Future Improvements
-
-The implemented scope includes authentication and personal task management. Team collaboration, project membership, invitations, task assignment to other users, comments, file attachments, and real-time notifications should be considered incomplete until their corresponding implementations and tests are added.
+ISC License.

@@ -89,7 +89,7 @@ async function loginUser({ email, password }) {
 
 async function getCurrentUser(userId) {
     const user = await User.findById(userId).select(
-        'name email createdAt updatedAt',
+        'name email isActive createdAt updatedAt',
     );
 
     if (!user || !user.isActive) {
@@ -105,9 +105,35 @@ async function getCurrentUser(userId) {
     };
 }
 
+async function updateUserProfile(userId, { name, password }) {
+    const user = await User.findById(userId).select('+password');
+
+    if (!user || !user.isActive) {
+        throw new AuthServiceError('User account not found', 404);
+    }
+
+    if (name) {
+        user.name = name;
+    }
+
+    if (password) {
+        user.password = password;
+    }
+
+    await user.save();
+
+    return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        updatedAt: user.updatedAt,
+    };
+}
+
 module.exports = {
     AuthServiceError,
     registerUser,
     loginUser,
     getCurrentUser,
+    updateUserProfile,
 };

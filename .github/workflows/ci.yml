@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-test:
+    runs-on: windows-latest   # matches your Windows dev environment
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'   # use the version you develop with
+
+      - name: Install dependencies
+        run: |
+          npm config set script-shell powershell
+          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+          npm ci
+
+      - name: Run tests
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          MONGODB_TEST_URI: ${{ secrets.MONGODB_TEST_URI }}
+          TEST_JWT: ${{ secrets.TEST_JWT }}
+        run: npm test

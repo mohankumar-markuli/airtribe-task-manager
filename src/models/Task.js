@@ -35,6 +35,17 @@ const taskSchema = new mongoose.Schema(
             required: [true, 'Task owner is required'],
             index: true,
         },
+        // New fields for collaboration
+        assignee: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null,
+        },
+        team: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Team',
+            default: null,
+        },
     },
     {
         timestamps: true,
@@ -44,5 +55,8 @@ const taskSchema = new mongoose.Schema(
 
 taskSchema.index({ owner: 1, status: 1 });
 taskSchema.index({ owner: 1, dueDate: 1 });
+// Indexes for assignment and team queries
+taskSchema.index({ assignee: 1, status: 1 });
+taskSchema.index({ team: 1, status: 1 });
 
 module.exports = mongoose.model('Task', taskSchema);

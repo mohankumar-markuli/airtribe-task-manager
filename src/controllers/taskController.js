@@ -1,3 +1,4 @@
+const { z } = require('zod');
 
 const {
     createTaskSchema,
@@ -13,20 +14,26 @@ const {
     deleteTask,
 } = require('../services/taskService');
 
-const taskListQuerySchema = require('zod').z
+const taskListQuerySchema = z
     .object({
-        status: require('zod').z.enum([
+        status: z.enum([
             'pending',
             'in_progress',
             'completed',
+            'open',
         ]).optional(),
-        search: require('zod').z.string().trim().max(120).optional(),
-        sortBy: require('zod').z.enum([
+        search: z.string().trim().max(120).optional(),
+        sortBy: z.enum([
             'createdAt',
             'dueDate',
             'title',
+            'updatedAt',
         ]).optional(),
-        order: require('zod').z.enum(['asc', 'desc']).optional(),
+        order: z.enum(['asc', 'desc']).optional(),
+        assignedToMe: z.union([z.string(), z.boolean()]).optional(),
+        scope: z.enum(['all', 'assigned', 'created']).optional(),
+        assignee: z.string().optional(),
+        team: z.string().optional(),
     })
     .strict();
 
@@ -57,6 +64,19 @@ async function create(req, res, next) {
 
     try {
         const task = await createTask(req.user.id, validation.data);
+
+        // Real-time socket notification
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('taskCreated', task);
+            if (task.assignee) {
+                const assigneeId = (task.assignee._id || task.assignee).toString();
+                io.to(`user_${assigneeId}`).emit('taskAssigned', {
+                    message: `You have been assigned to task: ${task.title}`,
+                    task,
+                });
+            }
+        }
 
         return res.status(201).json({
             success: true,
@@ -128,6 +148,20 @@ async function update(req, res, next) {
             validation.data,
         );
 
+        // Real-time socket notification
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('taskUpdated', task);
+            io.to(task._id.toString()).emit('taskUpdated', task);
+            if (task.assignee) {
+                const assigneeId = (task.assignee._id || task.assignee).toString();
+                io.to(`user_${assigneeId}`).emit('taskAssigned', {
+                    message: `Task updated: ${task.title}`,
+                    task,
+                });
+            }
+        }
+
         return res.status(200).json({
             success: true,
             message: 'Task updated successfully',
@@ -141,6 +175,12 @@ async function update(req, res, next) {
 async function remove(req, res, next) {
     try {
         await deleteTask(req.user.id, req.params.id);
+
+        // Real-time socket notification
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('taskDeleted', { taskId: req.params.id });
+        }
 
         return res.status(200).json({
             success: true,

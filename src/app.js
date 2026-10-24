@@ -7,6 +7,11 @@ const mongoose = require('mongoose');
 
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
+const teamRoutes = require('./routes/teamRoutes');
+const projectRoutes = require('./routes/projectRoutes');
+const commentRoutes = require('./routes/commentRoutes');
+const attachmentRoutes = require('./routes/attachmentRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 const app = express();
 
@@ -47,6 +52,13 @@ app.get('/api/v1/health', (req, res) => {
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/tasks', taskRoutes);
+app.use('/api/v1/tasks', commentRoutes);
+app.use('/api/v1/tasks', attachmentRoutes);
+app.use('/api/v1/teams', teamRoutes);
+app.use('/api/v1/projects', projectRoutes);
+app.use('/api/v1/comments', commentRoutes);
+app.use('/api/v1/attachments', attachmentRoutes);
+app.use('/api/v1/ai', aiRoutes);
 
 app.use((req, res) => {
     res.status(404).json({
