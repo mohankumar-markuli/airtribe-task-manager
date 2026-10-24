@@ -13,6 +13,7 @@ Node.js, Express.js, and MongoDB.
 - API request rate limiting
 - JSON error response for unknown routes
 - Automated tests using Jest and Supertest
+- MongoDB Atlas connection and database health reporting
 
 ## Technology Stack
 
