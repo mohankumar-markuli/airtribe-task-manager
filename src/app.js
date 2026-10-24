@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
 
 const authRoutes = require('./routes/authRoutes');
+const taskRoutes = require('./routes/taskRoutes');
 
 const app = express();
 
@@ -45,8 +46,8 @@ app.get('/api/v1/health', (req, res) => {
 });
 
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/tasks', taskRoutes);
 
-// Return a consistent JSON response for unknown routes.
 app.use((req, res) => {
     res.status(404).json({
         success: false,
@@ -54,7 +55,6 @@ app.use((req, res) => {
     });
 });
 
-// Handle errors passed to Express by controllers and middleware.
 app.use((error, req, res, next) => {
     if (res.headersSent) {
         return next(error);
