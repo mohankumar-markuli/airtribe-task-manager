@@ -7,6 +7,7 @@ const {
 const {
     registerUser,
     loginUser,
+    getCurrentUser,
     AuthServiceError,
 } = require('../services/authService');
 
@@ -78,7 +79,29 @@ async function login(req, res, next) {
     }
 }
 
+async function getMe(req, res, next) {
+    try {
+        const user = await getCurrentUser(req.user.id);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Profile retrieved successfully',
+            data: { user },
+        });
+    } catch (error) {
+        if (error instanceof AuthServiceError) {
+            return res.status(error.statusCode).json({
+                success: false,
+                message: error.message,
+            });
+        }
+
+        return next(error);
+    }
+}
+
 module.exports = {
     register,
     login,
+    getMe,
 };

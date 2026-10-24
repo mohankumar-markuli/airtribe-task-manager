@@ -87,8 +87,27 @@ async function loginUser({ email, password }) {
     };
 }
 
+async function getCurrentUser(userId) {
+    const user = await User.findById(userId).select(
+        'name email createdAt updatedAt',
+    );
+
+    if (!user || !user.isActive) {
+        throw new AuthServiceError('User account not found', 404);
+    }
+
+    return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+    };
+}
+
 module.exports = {
     AuthServiceError,
     registerUser,
     loginUser,
+    getCurrentUser,
 };
